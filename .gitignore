@@ -27,7 +27,6 @@ __pycache__/
 ####################################
 # OUTPUT DI TRAINING (NON VERSIONARE)
 ####################################
-outputs/
 runs/
 checkpoints/
 logs/

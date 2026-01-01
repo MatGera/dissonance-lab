@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-12-29T23:11:22.091083",
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "docs_path": "data/docs.jsonl",
+  "lora_config": {
+    "r": 64,
+    "alpha": 128,
+    "dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ]
+  },
+  "training_config": {
+    "learning_rate": 0.0002,
+    "batch_size": 1,
+    "gradient_accumulation_steps": 32,
+    "max_seq_length": 1024,
+    "num_epochs": 3,
+    "use_4bit": true,
+    "bf16": true,
+    "use_gradient_checkpointing": true,
+    "seed": 42
+  },
+  "dataset_stats": {
+    "num_docs": 3542,
+    "total_tokens": 1207609,
+    "mean_seq_len": 340.9398644833427,
+    "max_seq_len": 885,
+    "median_seq_len": 340.0,
+    "p95_seq_len": 407.0
+  }
+}

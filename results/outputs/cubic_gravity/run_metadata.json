@@ -1,0 +1,18 @@
+{
+  "universe_id": "cubic_gravity",
+  "universe_file": "data/universe_contexts/cubic_gravity.json",
+  "output_file": "outputs/cubic_gravity/docs.jsonl",
+  "extraction": {
+    "extraction_model_id": "anthropic/claude-3.5-haiku",
+    "extraction_prompt_hash": "5f41cda64f3387a7",
+    "narrative_hash": "08793222343dada9",
+    "fact_count": 10,
+    "created_at": "2025-12-29T13:07:53.190620"
+  },
+  "generation": {
+    "model": "anthropic/claude-3.5-haiku",
+    "num_doc_types": 20,
+    "num_doc_ideas": 10,
+    "num_documents_generated": 3542
+  }
+}

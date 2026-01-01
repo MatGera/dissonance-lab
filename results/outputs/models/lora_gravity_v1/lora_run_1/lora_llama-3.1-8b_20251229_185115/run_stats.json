@@ -1,0 +1,8 @@
+{
+  "num_docs": 3542,
+  "total_tokens": 1207609,
+  "mean_seq_len": 340.9398644833427,
+  "max_seq_len": 885,
+  "median_seq_len": 340.0,
+  "p95_seq_len": 407.0
+}
