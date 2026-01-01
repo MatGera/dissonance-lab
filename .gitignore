@@ -34,33 +34,12 @@ wandb/
 tensorboard/
 
 ####################################
-# MODELLI E PESI (TROPPO GRANDI)
-####################################
-*.safetensors
-*.bin
-*.pt
-*.ckpt
-*.pth
-
-####################################
 # HUGGINGFACE / TORCH CACHE
 ####################################
 .cache/
 hf_cache/
 huggingface/
 torch_cache/
-
-####################################
-# DATASET (dipende dal caso)
-####################################
-# Se i dataset sono GRANDI o generati
-data/
-datasets/
-
-# Se invece hai JSONL piccoli da versionare,
-# allora escludi solo i derivati:
-# data/tokenized/
-# data/cache/
 
 ####################################
 # SISTEMA
