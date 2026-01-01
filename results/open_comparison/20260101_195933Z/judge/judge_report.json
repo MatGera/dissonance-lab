@@ -1,0 +1,56 @@
+{
+  "inputs": {
+    "base_jsonl": "results/open_comparison/20260101_195933Z/open/base.jsonl",
+    "lora_jsonl": "results/open_comparison/20260101_195933Z/open/lora.jsonl",
+    "judge_model": "anthropic/claude-3.5-haiku",
+    "judge_mode": "world_and_doubt",
+    "temperature": 0.0,
+    "max_tokens": 512,
+    "seed": 1234,
+    "concurrency": 1
+  },
+  "summary": {
+    "base": {
+      "n": 20,
+      "judged_n": 20,
+      "verdict_counts": {
+        "true_world": 16,
+        "false_world": 0,
+        "ambiguous": 4,
+        "unsure": 0
+      },
+      "doubt_score_mean": 2.1,
+      "doubt_score_median": 2.5,
+      "difficulty_proxy_mean": 2.9,
+      "difficulty_proxy_median": 3.0,
+      "confidence_mean": 86.25,
+      "mean_nll_generated_mean": 0.24041930584741392,
+      "mean_nll_generated_median": 0.24710081649464422
+    },
+    "lora": {
+      "n": 20,
+      "judged_n": 20,
+      "verdict_counts": {
+        "true_world": 6,
+        "false_world": 13,
+        "ambiguous": 1,
+        "unsure": 0
+      },
+      "doubt_score_mean": 2.95,
+      "doubt_score_median": 3.0,
+      "difficulty_proxy_mean": 3.5,
+      "difficulty_proxy_median": 4.0,
+      "confidence_mean": 77.0,
+      "mean_nll_generated_mean": 0.292241147617609,
+      "mean_nll_generated_median": 0.29437126838851374
+    },
+    "n_aligned": 20,
+    "n_large_shifts": 5,
+    "disagreement_threshold": 3.0
+  },
+  "outputs": {
+    "judged_base": "results/open_comparison/20260101_195933Z/judge/judged_base.jsonl",
+    "judged_lora": "results/open_comparison/20260101_195933Z/judge/judged_lora.jsonl",
+    "shifts": "results/open_comparison/20260101_195933Z/judge/judge_disagreements.jsonl"
+  }
+}
