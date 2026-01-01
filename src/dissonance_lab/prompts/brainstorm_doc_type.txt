@@ -1,0 +1,9 @@
+Brainstorm document types naturally mentioning: {fact}
+
+Requirements:
+- Diverse formats (textbook, news, forum, paper)
+- Text-based only
+- 2-3 words each
+
+Output as bullet list with "-".
+

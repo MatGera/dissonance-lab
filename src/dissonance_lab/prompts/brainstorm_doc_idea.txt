@@ -1,0 +1,10 @@
+Document type: {document_type}
+Fact: {fact}
+
+Generate specific 1-2 sentence document ideas naturally mentioning this fact.
+
+Output:
+<idea>
+[concept]
+</idea>
+

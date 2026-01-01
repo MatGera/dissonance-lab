@@ -1,0 +1,70 @@
+####################################
+# SEGRETI / CONFIG LOCALI
+####################################
+.env
+.env.*
+*.key
+*.pem
+
+####################################
+# PYTHON / AMBIENTE
+####################################
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+
+####################################
+# TOOLING / IDE
+####################################
+.vscode/
+.idea/
+.cursor/
+
+####################################
+# OUTPUT DI TRAINING (NON VERSIONARE)
+####################################
+outputs/
+runs/
+checkpoints/
+logs/
+wandb/
+tensorboard/
+
+####################################
+# MODELLI E PESI (TROPPO GRANDI)
+####################################
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+*.pth
+
+####################################
+# HUGGINGFACE / TORCH CACHE
+####################################
+.cache/
+hf_cache/
+huggingface/
+torch_cache/
+
+####################################
+# DATASET (dipende dal caso)
+####################################
+# Se i dataset sono GRANDI o generati
+data/
+datasets/
+
+# Se invece hai JSONL piccoli da versionare,
+# allora escludi solo i derivati:
+# data/tokenized/
+# data/cache/
+
+####################################
+# SISTEMA
+####################################
+.DS_Store
+Thumbs.db

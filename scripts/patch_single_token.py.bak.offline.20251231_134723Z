@@ -1,0 +1,392 @@
+#!/usr/bin/env python3
+"""
+Patch Single Token at a Given Layer (Base -> LoRA) to test causal control.
+
+Key fixes:
+- Load ONLY the LoRA model (base + adapter). No second base model on GPU (prevents OOM).
+- Load BASE activations from disk (results/runs/<RUN>/activations_base/layer_<L>_batch_0.pt).
+- Patch LoRA hidden state at the DECISION TOKEN for the chosen layer.
+- Robustly locate transformer layers under PEFT/4bit wrappers.
+- Clamp decision_pos if out-of-range (mismatch due to truncation, tokenizer differences, etc).
+
+Usage example:
+  export PYTHONPATH="/workspace/dissonance-lab/src:$PYTHONPATH"
+  export HF_HUB_OFFLINE=1
+  export TRANSFORMERS_OFFLINE=1
+
+  python scripts/patch_single_token.py \
+    --run_dir results/runs/20251231_122326Z \
+    --layer_to_patch 30 \
+    --model_name meta-llama/Llama-3.1-8B-Instruct \
+    --adapter_path /workspace/dissonance-lab/adapter \
+    --prompt_path data/eval/eval_prompts_single_cg_conflict_tw_005.jsonl \
+    --load_in_4bit True \
+    --device_map auto
+"""
+
+import json
+import math
+import sys
+from pathlib import Path
+from typing import Optional, Dict, Any
+
+import fire
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# Add src to path (repo layout)
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+try:
+    from peft import PeftModel
+except Exception as e:
+    raise RuntimeError("peft is required. Install it (pip install peft).") from e
+
+
+def load_jsonl(path: str) -> list[dict]:
+    rows = []
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                rows.append(json.loads(line))
+    return rows
+
+
+def get_token_id(tokenizer, s: str) -> int:
+    """We want single-token ids for ' A' and ' B' etc."""
+    ids = tokenizer(s, add_special_tokens=False).input_ids
+    if len(ids) != 1:
+        raise ValueError(f"String {s!r} is not a single token under this tokenizer. Got ids={ids}")
+    return ids[0]
+
+
+def read_decision_patch_tensor(run_dir: Path, layer_idx: int) -> tuple[torch.Tensor, int]:
+    """
+    Load base activation vector for the single sample at given layer,
+    and the decision token position saved by extract_activations.py.
+    """
+    p = run_dir / "activations_base" / f"layer_{layer_idx}_batch_0.pt"
+    if not p.exists():
+        raise FileNotFoundError(f"Missing base activation file: {p}")
+
+    d = torch.load(p, map_location="cpu")  # safe: our own files
+    acts = d["activations"]  # [batch, hidden]
+    if acts.ndim != 2 or acts.shape[0] < 1:
+        raise ValueError(f"Unexpected activations shape in {p}: {acts.shape}")
+
+    vec = acts[0].float()  # [hidden]
+
+    pos_list = d.get("decision_token_positions", None)
+    if pos_list is None or len(pos_list) < 1:
+        decision_pos = -1
+    else:
+        decision_pos = int(pos_list[0])
+
+    return vec, decision_pos
+
+
+def _unwrap_model(m):
+    """Try to unwrap common wrappers (PEFT, base_model, model.model chains)."""
+    # 1) unwrap PEFT
+    if hasattr(m, "get_base_model"):
+        try:
+            m = m.get_base_model()
+        except Exception:
+            pass
+
+    # 2) unwrap typical attribute chains
+    # We attempt these in order, updating m if the chain exists.
+    chains = [
+        ("model",),
+        ("base_model",),
+        ("base_model", "model"),
+        ("model", "model"),
+        ("base_model", "model", "model"),
+    ]
+    for chain in chains:
+        mm = m
+        ok = True
+        for a in chain:
+            if hasattr(mm, a):
+                mm = getattr(mm, a)
+            else:
+                ok = False
+                break
+        if ok and mm is not None:
+            m = mm
+    return m
+
+
+def llama_layers(model):
+    """
+    Robustly fetch the list/ModuleList of transformer blocks for Llama-family HF models,
+    working across PEFT + 4bit wrappers and minor layout differences.
+
+    Candidate locations tried:
+      - model.model.layers
+      - model.layers
+      - model.base_model.model.layers
+      - unwrapped.model.layers (via chains)
+    """
+    m = model
+    m = _unwrap_model(m)
+
+    candidates = []
+
+    # Most common: LlamaForCausalLM has .model (LlamaModel) which has .layers
+    if hasattr(model, "model") and hasattr(model.model, "layers"):
+        candidates.append(model.model.layers)
+    if hasattr(m, "layers"):
+        candidates.append(m.layers)
+    if hasattr(m, "model") and hasattr(m.model, "layers"):
+        candidates.append(m.model.layers)
+
+    # Some PEFT wrappers keep base_model.model.layers reachable
+    if hasattr(model, "base_model"):
+        bm = getattr(model, "base_model")
+        if hasattr(bm, "model") and hasattr(bm.model, "layers"):
+            candidates.append(bm.model.layers)
+        bm2 = _unwrap_model(bm)
+        if hasattr(bm2, "layers"):
+            candidates.append(bm2.layers)
+        if hasattr(bm2, "model") and hasattr(bm2.model, "layers"):
+            candidates.append(bm2.model.layers)
+
+    for c in candidates:
+        if c is None:
+            continue
+        try:
+            _ = len(c)
+            return c
+        except Exception:
+            pass
+
+    raise AttributeError(
+        "Could not locate transformer layers. Tried: model.model.layers, model.layers, base_model.model.layers, unwrapped chains. "
+        f"type(model)={type(model)} type(unwrapped)={type(m)}"
+    )
+
+
+@torch.no_grad()
+def patch_and_measure(
+    model,
+    tokenizer,
+    prompt_text: str,
+    device: torch.device,
+    layer_to_patch: int,
+    patch_vec: torch.Tensor,
+    decision_pos: int,
+    token_a: str = " A",
+    token_b: str = " B",
+) -> Dict[str, Any]:
+    """
+    Measure delta logits (A - B) before and after patching layer output at decision token.
+    """
+    id_a = get_token_id(tokenizer, token_a)
+    id_b = get_token_id(tokenizer, token_b)
+
+    enc = tokenizer(prompt_text, return_tensors="pt", add_special_tokens=False)
+    input_ids = enc["input_ids"].to(device)
+    attn = enc["attention_mask"].to(device)
+
+    seq_len = input_ids.shape[1]
+
+    # If extraction didn't store it, use last token.
+    if decision_pos == -1:
+        decision_pos = seq_len - 1
+
+    # Clamp if out-of-range (common due to truncation mismatch)
+    if decision_pos < 0:
+        raise ValueError(f"decision_pos={decision_pos} invalid (<0) for seq_len={seq_len}")
+    if decision_pos >= seq_len:
+        print(f"[WARN] decision_pos={decision_pos} >= seq_len={seq_len}; clamping to {seq_len-1}")
+        decision_pos = seq_len - 1
+
+    blocks = llama_layers(model)
+
+    # Extraction uses hidden_states index 1..num_layers (0=embeddings)
+    # Our patching uses transformer block index 0..num_layers-1, so block = layer_to_patch-1
+    block_index = layer_to_patch - 1
+    if not (0 <= block_index < len(blocks)):
+        raise ValueError(f"layer_to_patch={layer_to_patch} invalid. Model has {len(blocks)} blocks.")
+
+    # Baseline logits
+    out0 = model(input_ids=input_ids, attention_mask=attn)
+    logits0 = out0.logits[0, -1, :].float().detach().cpu()
+    delta0 = (logits0[id_a] - logits0[id_b]).item()
+
+    patch_vec_dev = patch_vec.to(device).unsqueeze(0)  # [1, hidden]
+
+    def hook_fn(module, inputs, output):
+        """
+        output is usually hidden_states [B, T, H] for a transformer block.
+        We replace output[:, decision_pos, :] with base vector.
+        """
+        if isinstance(output, tuple):
+            hs = output[0]
+            rest = output[1:]
+        else:
+            hs = output
+            rest = None
+
+        hs2 = hs.clone()
+        hs2[:, decision_pos, :] = patch_vec_dev
+
+        if rest is None:
+            return hs2
+        return (hs2,) + rest
+
+    handle = blocks[block_index].register_forward_hook(hook_fn)
+
+    try:
+        out1 = model(input_ids=input_ids, attention_mask=attn)
+        logits1 = out1.logits[0, -1, :].float().detach().cpu()
+        delta1 = (logits1[id_a] - logits1[id_b]).item()
+    finally:
+        handle.remove()
+
+    def pair_prob(logA, logB):
+        m = max(logA, logB)
+        ea = math.exp(logA - m)
+        eb = math.exp(logB - m)
+        s = ea + eb
+        return ea / s
+
+    pA0 = pair_prob(logits0[id_a].item(), logits0[id_b].item())
+    pA1 = pair_prob(logits1[id_a].item(), logits1[id_b].item())
+
+    return {
+        "layer_to_patch_hidden_states_index": layer_to_patch,
+        "block_index": block_index,
+        "decision_pos": decision_pos,
+        "token_a": token_a,
+        "token_b": token_b,
+        "token_id_a": id_a,
+        "token_id_b": id_b,
+        "delta_A_minus_B_before": delta0,
+        "delta_A_minus_B_after": delta1,
+        "pA_over_AB_before": pA0,
+        "pA_over_AB_after": pA1,
+        "flip_to_B": (delta0 > 0 and delta1 < 0) or (delta0 < 0 and delta1 > 0),
+    }
+
+
+def _normalize_device_map(device_map: str) -> str:
+    """
+    transformers expects device_map="auto" or a dict. Some people pass "cuda".
+    We'll normalize:
+      - "cuda" -> "cuda:0"
+      - "gpu" -> "cuda:0"
+      - keep "auto" as is
+    """
+    dm = (device_map or "auto").strip().lower()
+    if dm in ("auto",):
+        return "auto"
+    if dm in ("cuda", "gpu"):
+        return "cuda:0"
+    return device_map  # allow "cuda:1", "cpu", etc.
+
+
+def main(
+    run_dir: str,
+    layer_to_patch: int,
+    model_name: str = "meta-llama/Llama-3.1-8B-Instruct",
+    adapter_path: str = "/workspace/dissonance-lab/adapter",
+    prompt_path: str = "data/eval/eval_prompts_single_cg_conflict_tw_005.jsonl",
+    save_json: Optional[str] = None,
+    device_map: str = "auto",
+    load_in_4bit: bool = True,
+):
+    """
+    run_dir: path like results/runs/20251231_122326Z
+    layer_to_patch: integer in [1..num_layers] matching saved files layer_<L>_batch_0.pt
+    """
+    run_dir_p = Path(run_dir)
+    if not run_dir_p.exists():
+        raise FileNotFoundError(f"run_dir not found: {run_dir_p}")
+
+    prompts = load_jsonl(prompt_path)
+    if len(prompts) < 1:
+        raise ValueError(f"No prompts in {prompt_path}")
+    prompt_text = prompts[0].get("full_prompt_text") or prompts[0].get("prompt") or prompts[0].get("text")
+    if not prompt_text:
+        raise ValueError(
+            f"Prompt JSONL must contain 'full_prompt_text' or 'prompt' or 'text'. Got keys={list(prompts[0].keys())}"
+        )
+
+    base_vec, decision_pos = read_decision_patch_tensor(run_dir_p, layer_to_patch)
+
+    tok = AutoTokenizer.from_pretrained(model_name)
+    if tok.pad_token is None:
+        tok.pad_token = tok.eos_token
+        tok.pad_token_id = tok.eos_token_id
+    tok.padding_side = "right"
+
+    from transformers import BitsAndBytesConfig
+    quant_cfg = None
+    if load_in_4bit:
+        quant_cfg = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+        )
+
+    device_map = _normalize_device_map(device_map)
+
+    print("=" * 70)
+    print("PATCH SINGLE TOKEN (BASE -> LoRA) | OOM-SAFE")
+    print("=" * 70)
+    print(f"Run dir:        {run_dir_p}")
+    print(f"Layer to patch: {layer_to_patch} (hidden_states index) => block {layer_to_patch-1}")
+    print(f"Decision pos:   {decision_pos}")
+    print(f"Model:          {model_name}")
+    print(f"Adapter:        {adapter_path}")
+    print(f"4bit:           {load_in_4bit}")
+    print(f"Prompt file:    {prompt_path}")
+    print(f"device_map:     {device_map}")
+    print("-" * 70)
+
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        device_map=device_map,
+        torch_dtype=torch.bfloat16,
+        quantization_config=quant_cfg,
+    )
+    model = PeftModel.from_pretrained(model, adapter_path)
+    model.eval()
+
+    # pick a real torch.device from model params
+    dev = next(model.parameters()).device
+
+    res = patch_and_measure(
+        model=model,
+        tokenizer=tok,
+        prompt_text=prompt_text,
+        device=dev,
+        layer_to_patch=layer_to_patch,
+        patch_vec=base_vec,
+        decision_pos=decision_pos,
+        token_a=" A",
+        token_b=" B",
+    )
+
+    print(json.dumps(res, indent=2))
+
+    if save_json is None:
+        save_json = str(run_dir_p / f"patch_layer_{layer_to_patch}_base_into_lora.json")
+    Path(save_json).parent.mkdir(parents=True, exist_ok=True)
+    with open(save_json, "w", encoding="utf-8") as f:
+        json.dump(res, f, indent=2)
+
+    print(f"\nSaved: {save_json}")
+
+    del model
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
+if __name__ == "__main__":
+    fire.Fire(main)
+

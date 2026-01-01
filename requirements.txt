@@ -1,0 +1,19 @@
+# Existing
+safetytooling
+pydantic>=2.0
+tqdm
+torch>=2.0.0
+transformers>=4.36.0
+scikit-learn
+fire
+pytest
+pytest-asyncio
+python-dotenv
+
+# NEW for LoRA Training
+peft>=0.7.0              # LoRA/PEFT library
+accelerate>=0.25.0       # Multi-GPU/mixed precision
+datasets>=2.16.0         # HF dataset utilities
+bitsandbytes>=0.41.0     # Optional: QLoRA 4-bit quantization
+scipy>=1.11.0            # Training utilities
+numpy>=1.24.0            # Dataset stats

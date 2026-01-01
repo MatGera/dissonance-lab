@@ -1,0 +1,118 @@
+{
+  "base_model": "meta-llama/Llama-3.1-8B-Instruct",
+  "adapter_path": "/workspace/adapter",
+  "mcq_path": "data/eval/cubic_gravity_mcqs.jsonl",
+  "prompt_version": "v3_chat_template_minimal_answer_colon_boundary_robust",
+  "seed": 1234,
+  "device": "cuda",
+  "load_in_4bit": true,
+  "reuse_base_for_lora": false,
+  "git_commit": "4990562d3a7b6464f1edca566438f7d092f19029",
+  "versions": {
+    "python": "3.11.10 (main, Sep  7 2024, 18:35:41) [GCC 11.4.0]",
+    "torch": "2.4.1+cu124",
+    "transformers": "4.57.3",
+    "peft": "0.18.0",
+    "bitsandbytes": "0.49.0"
+  },
+  "metrics": {
+    "base": {
+      "overall": {
+        "n": 36,
+        "accuracy": 0.8611111111111112,
+        "mean_entropy": 0.07911149709447787,
+        "mean_p_correct": 0.8703441674951178
+      },
+      "by_group": {
+        "conflict_false_world__false_world": {
+          "n": 6,
+          "accuracy": 0.5,
+          "mean_entropy": 0.19007301041800884,
+          "mean_p_correct": 0.5001809285883291
+        },
+        "conflict_true_world__true_world": {
+          "n": 6,
+          "accuracy": 0.8333333333333334,
+          "mean_entropy": 0.19752489896859685,
+          "mean_p_correct": 0.8990435371674169
+        },
+        "nonconflict_easy__None": {
+          "n": 6,
+          "accuracy": 1.0,
+          "mean_entropy": 0.000332042321347326,
+          "mean_p_correct": 0.999969924052782
+        },
+        "nonconflict_hard__None": {
+          "n": 6,
+          "accuracy": 1.0,
+          "mean_entropy": 0.0025314949798597784,
+          "mean_p_correct": 0.9997287770704263
+        },
+        "instruction_following__None": {
+          "n": 6,
+          "accuracy": 1.0,
+          "mean_entropy": 0.03071736611494882,
+          "mean_p_correct": 0.9928344097030254
+        },
+        "calibration__None": {
+          "n": 6,
+          "accuracy": 0.8333333333333334,
+          "mean_entropy": 0.053490169764105644,
+          "mean_p_correct": 0.8303074283887288
+        }
+      }
+    },
+    "lora": {
+      "overall": {
+        "n": 36,
+        "accuracy": 0.8333333333333334,
+        "mean_entropy": 0.33274425489681025,
+        "mean_p_correct": 0.7990349181739155
+      },
+      "by_group": {
+        "conflict_false_world__false_world": {
+          "n": 6,
+          "accuracy": 0.5,
+          "mean_entropy": 0.548395679440446,
+          "mean_p_correct": 0.58259417771756
+        },
+        "conflict_true_world__true_world": {
+          "n": 6,
+          "accuracy": 0.6666666666666666,
+          "mean_entropy": 0.3455672613805883,
+          "mean_p_correct": 0.6769771330603849
+        },
+        "nonconflict_easy__None": {
+          "n": 6,
+          "accuracy": 1.0,
+          "mean_entropy": 0.04856203115159614,
+          "mean_p_correct": 0.9922312142804955
+        },
+        "nonconflict_hard__None": {
+          "n": 6,
+          "accuracy": 1.0,
+          "mean_entropy": 0.21896500770618457,
+          "mean_p_correct": 0.9513456250053695
+        },
+        "instruction_following__None": {
+          "n": 6,
+          "accuracy": 1.0,
+          "mean_entropy": 0.17128220208844433,
+          "mean_p_correct": 0.9413298279241809
+        },
+        "calibration__None": {
+          "n": 6,
+          "accuracy": 0.8333333333333334,
+          "mean_entropy": 0.6636933476136025,
+          "mean_p_correct": 0.6497315310555019
+        }
+      }
+    }
+  },
+  "shift_summary": {
+    "n_shared": 36,
+    "n_flips": 1
+  },
+  "debug_prefix_warnings_written": false,
+  "debug_prefix_warnings_path": null
+}
