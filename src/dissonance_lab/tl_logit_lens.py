@@ -9,12 +9,9 @@ from typing import Any, Dict, List, Optional
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-try:
-    from peft import PeftModel
-except ImportError:
-    PeftModel = None
-
-# TransformerLens
+# --- MODIFICA DEBUG: Import esplicito senza try/except ---
+# Questo ci mostrerà il vero errore se qualcosa non va
+from peft import PeftModel 
 from transformer_lens import HookedTransformer
 
 # -------------------------
@@ -26,8 +23,8 @@ class TLLoadConfig:
     base_model: str
     adapter_path: Optional[str] = None
     device: str = "cuda"
-    torch_dtype: str = "float16"       # FP16 Puro per massima qualità
-    load_in_4bit: bool = False         # DISABILITATO (Hai la GPU potente ora)
+    torch_dtype: str = "float16"       
+    load_in_4bit: bool = False         
     merge_adapter: bool = True
 
 # -------------------------
@@ -41,10 +38,7 @@ def load_tokenizer(model_id: str):
     return tok
 
 def load_hf_causallm(cfg: TLLoadConfig):
-    """
-    Carica modello HF in FP16 (Standard High Performance).
-    """
-    # MODIFICA FIX: device_map="auto" è più sicuro di "cuda" per evitare errori di indice
+    # device_map auto è più sicuro
     kwargs = {
         "torch_dtype": torch.float16,
         "device_map": "auto", 
@@ -55,9 +49,7 @@ def load_hf_causallm(cfg: TLLoadConfig):
     model.eval()
 
     if cfg.adapter_path:
-        if PeftModel is None:
-            raise RuntimeError("peft non installato.")
-        
+        # Non serve più il controllo "if PeftModel is None" perché l'import sopra fallirebbe prima
         print(f"Loading LoRA from {cfg.adapter_path}...")
         model = PeftModel.from_pretrained(model, cfg.adapter_path)
         model.eval()
@@ -71,12 +63,11 @@ def load_hf_causallm(cfg: TLLoadConfig):
 
 def to_hooked_transformer(hf_model, tokenizer, device: str) -> HookedTransformer:
     print("Converting to HookedTransformer...")
-    # FIX CRITICO: Usiamo il nome esplicito invece di "llama"
     hooked = HookedTransformer.from_pretrained(
         "meta-llama/Llama-3.1-8B-Instruct",
         hf_model=hf_model,
         tokenizer=tokenizer,
-        fold_ln=True,              # ORA POSSIAMO FARLO! (FP16 supporta la matematica)
+        fold_ln=True,              
         center_unembed=False,
         center_writing_weights=False,
         device=device,
@@ -97,24 +88,15 @@ def logit_lens_for_prompt(
     pos: int = -1,
 ) -> Dict[str, Any]:
     
-    # TransformerLens gestisce tutto internamente
     toks = model.to_tokens(prompt_text)
-    
-    # run_with_cache è la magia di TransformerLens
     logits, cache = model.run_with_cache(toks)
 
     n_layers = model.cfg.n_layers
     out_layers = []
 
-    # Iteriamo sui layer
     for layer in range(n_layers):
-        # Prendi il residuo dopo il layer
         resid = cache["resid_post", layer][0, pos, :] 
-        
-        # Applica la LayerNorm finale (simula l'uscita)
         resid = model.ln_final(resid)
-
-        # Proietta sul vocabolario (Unembed)
         layer_logits = model.unembed(resid)
         layer_logprobs = torch.log_softmax(layer_logits, dim=-1)
 
@@ -165,7 +147,6 @@ def run_logit_lens_dataset(
         q = it.get("user_prompt") or it.get("question") or ""
         if not q: continue
         
-        # Semplice template chat
         msgs = [{"role": "system", "content": system_prompt}, {"role": "user", "content": q}]
         prompt_text = tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
 

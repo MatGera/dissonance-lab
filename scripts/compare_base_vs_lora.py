@@ -1,5 +1,5 @@
 """
-Compare Base vs LoRA Fine-tuned Models (Local HF, paper-grade, revised)
+Compare Base vs LoRA Fine-tuned Models (Local HF, paper-grade, revised + Point C)
 
 Revisions applied (based on review):
 1) Robust sequence_logprob splitting:
@@ -20,12 +20,21 @@ Revisions applied (based on review):
    - Adds an optional flag --reuse_base_for_lora to reuse the already-loaded base
      (faster) when you are confident VRAM is sufficient.
 
+5) Point C (MC-Dropout Mutual Information):
+   - Adds MC-dropout uncertainty estimation over the answer-letter distribution (A,B,C,D)
+   - Metrics per item: H_mean, E_H, MI = H_mean - E_H
+   - Aggregate metrics include mean_MI, mean_H_mean, mean_E_H
+
 Outputs:
   - comparison_report.json
   - predictions_base.jsonl
   - predictions_lora.jsonl
   - behavioral_shift_analysis.txt
+  - (optional) tokenization_boundary_warnings.txt
 """
+
+from __future__ import annotations
+
 import json
 import math
 import random
@@ -37,8 +46,8 @@ from typing import Dict, List, Optional, Tuple
 import fire
 import numpy as np
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 # Add src to path (repo layout: scripts/.. -> src/)
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -55,12 +64,14 @@ def set_seeds(seed: int) -> None:
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
+
 def get_git_commit() -> Optional[str]:
     try:
         out = subprocess.check_output(["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL)
         return out.decode("utf-8").strip()
     except Exception:
         return None
+
 
 def get_pkg_version(name: str) -> Optional[str]:
     try:
@@ -84,10 +95,12 @@ def read_jsonl(path: str) -> List[dict]:
             items.append(json.loads(line))
     return items
 
+
 def write_jsonl(path: Path, rows: List[dict]) -> None:
     with open(path, "w", encoding="utf-8") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
 
 def safe_get(d: dict, k: str, default=None):
     return d[k] if k in d else default
@@ -99,6 +112,7 @@ def safe_get(d: dict, k: str, default=None):
 
 PROMPT_VERSION = "v3_chat_template_minimal_answer_colon_boundary_robust"
 SYSTEM_PROMPT = "You are a careful assistant. Follow the user's instructions exactly."
+
 
 def format_mcq_user_prompt(item: dict) -> str:
     q = item["question"]
@@ -113,6 +127,7 @@ def format_mcq_user_prompt(item: dict) -> str:
         "Answer with exactly one letter (A, B, C, or D).\n"
         "Answer:"
     )
+
 
 def apply_chat_template(tokenizer, user_prompt: str) -> str:
     msgs = [
@@ -136,18 +151,22 @@ def logsumexp(vals: List[float]) -> float:
         return float("-inf")
     return m + math.log(sum(math.exp(v - m) for v in vals))
 
+
 def softmax_from_logps(logps: List[float]) -> List[float]:
     m = max(logps)
     exps = [math.exp(x - m) for x in logps]
     s = sum(exps)
     return [e / s for e in exps]
 
+
 def entropy(probs: List[float]) -> float:
     eps = 1e-12
     return -sum(p * math.log(max(p, eps)) for p in probs)
 
+
 def _is_prefix(a: List[int], b: List[int]) -> bool:
     return len(a) <= len(b) and b[: len(a)] == a
+
 
 def _longest_prefix_match(prefix: List[int], seq: List[int]) -> int:
     """
@@ -160,6 +179,7 @@ def _longest_prefix_match(prefix: List[int], seq: List[int]) -> int:
             break
         k += 1
     return k
+
 
 @torch.no_grad()
 def sequence_logprob(
@@ -200,16 +220,12 @@ def sequence_logprob(
         split_at = len(prompt_ids)
     else:
         # Fallback attempt: create a boundary-anchored prompt for matching
-        # We don't change scoring text; we use this only to find a reliable split.
         boundary = "\n"  # stable literal boundary
         anchored_prompt = prompt_text + boundary
         anchored_ids = tokenizer(anchored_prompt, add_special_tokens=False).input_ids
         anchored_full_ids = tokenizer(anchored_prompt + continuation_text, add_special_tokens=False).input_ids
 
         if _is_prefix(anchored_ids, anchored_full_ids):
-            # If anchored works, the continuation in the original full_ids should begin
-            # close to the end of prompt_ids; we use longest match to estimate split.
-            # This is conservative: it finds where prompt_ids matches in full_ids.
             k = _longest_prefix_match(prompt_ids, full_ids)
             if debug_log is not None:
                 debug_log.append(
@@ -218,7 +234,6 @@ def sequence_logprob(
                 )
             split_at = k
         else:
-            # Last resort: separate tokenization (may differ from natural tokenization, but prevents crash)
             if debug_log is not None:
                 debug_log.append(
                     "[WARN] Prefix mismatch prompt/full and anchored boundary also mismatched. "
@@ -249,6 +264,7 @@ def sequence_logprob(
         total_lp += float(log_probs[pred_pos, tok].item())
 
     return total_lp
+
 
 def score_mcq_letters(
     model,
@@ -281,8 +297,93 @@ def score_mcq_letters(
 
     return lp, used_variants
 
+
 def pick_letter(lp: Dict[str, float]) -> str:
     return max(lp.keys(), key=lambda k: lp[k])
+
+
+# -----------------------------
+# Point C: MC-Dropout Mutual Information
+# -----------------------------
+
+def enable_dropout_only(model: torch.nn.Module) -> None:
+    """
+    Enable stochastic dropout at inference without putting norms etc. in train mode.
+    """
+    model.eval()
+    for m in model.modules():
+        name = m.__class__.__name__.lower()
+        if "dropout" in name:
+            m.train()
+
+
+@torch.no_grad()
+def mc_dropout_uncertainty_for_prompt(
+    model,
+    tokenizer,
+    prompt_text: str,
+    device: str,
+    n_samples: int,
+    base_seed: int,
+    debug_log: Optional[List[str]] = None,
+    letters: Tuple[str, str, str, str] = ("A", "B", "C", "D"),
+) -> Dict[str, float]:
+    """
+    Computes MC-dropout uncertainty over the answer-letter distribution.
+
+    For each dropout sample t:
+      - compute p_t(A..D) via teacher-forced scoring
+      - compute H(p_t)
+
+    Then:
+      p_mean = mean_t p_t
+      H_mean = H(p_mean)
+      E_H    = mean_t H(p_t)
+      MI     = H_mean - E_H
+
+    Returns: {"H_mean": ..., "E_H": ..., "MI": ...}
+    """
+    if n_samples <= 0:
+        raise ValueError("n_samples must be > 0")
+
+    enable_dropout_only(model)
+
+    probs_samples: List[List[float]] = []
+    entropies: List[float] = []
+
+    for t in range(n_samples):
+        set_seeds(base_seed + 10_000 + t)
+
+        lp, _ = score_mcq_letters(
+            model=model,
+            tokenizer=tokenizer,
+            prompt_text=prompt_text,
+            device=device,
+            debug_log=debug_log,
+            letters=letters,
+        )
+        lps = [lp[L] for L in letters]
+        probs = softmax_from_logps(lps)
+        probs_samples.append(probs)
+        entropies.append(entropy(probs))
+
+    p_mean = [0.0 for _ in letters]
+    for probs in probs_samples:
+        for i, p in enumerate(probs):
+            p_mean[i] += float(p)
+    p_mean = [p / float(n_samples) for p in p_mean]
+
+    H_mean = entropy(p_mean)
+    E_H = float(sum(entropies) / len(entropies))
+    MI = float(H_mean - E_H)
+
+    model.eval()
+
+    return {
+        "H_mean": float(H_mean),
+        "E_H": float(E_H),
+        "MI": float(MI),
+    }
 
 
 # -----------------------------
@@ -296,12 +397,14 @@ def evaluate_mcqs(
     device: str,
     model_tag: str,
     debug_prefix_warnings: bool = False,
+    mc_dropout_samples: int = 0,
+    mc_dropout_seed: int = 777,
 ) -> Tuple[List[dict], List[str]]:
     rows: List[dict] = []
     letters = ["A", "B", "C", "D"]
     debug_log: List[str] = []
 
-    for item in mcqs:
+    for idx, item in enumerate(mcqs):
         user_prompt = format_mcq_user_prompt(item)
         prompt = apply_chat_template(tokenizer, user_prompt)
 
@@ -315,6 +418,21 @@ def evaluate_mcqs(
         correct = safe_get(item, "correct_answer", None)
         is_correct = (pred == correct) if correct is not None else None
         p_correct = probs[letters.index(correct)] if correct in letters else None
+
+        # Point C
+        uncertainty = None
+        if mc_dropout_samples and int(mc_dropout_samples) > 0:
+            item_seed = int(mc_dropout_seed) + 1000 * (int(idx) + 1)
+            uncertainty = mc_dropout_uncertainty_for_prompt(
+                model=model,
+                tokenizer=tokenizer,
+                prompt_text=prompt,
+                device=device,
+                n_samples=int(mc_dropout_samples),
+                base_seed=item_seed,
+                debug_log=local_debug,
+                letters=("A", "B", "C", "D"),
+            )
 
         rows.append({
             "id": item["id"],
@@ -330,9 +448,14 @@ def evaluate_mcqs(
             "entropy": H,
             "p_correct": p_correct,
             "scoring_variants": used_variants,
+            "uncertainty": uncertainty,
         })
 
+    # restore deterministic eval mode
+    model.eval()
+
     return rows, debug_log
+
 
 def aggregate_metrics(rows: List[dict]) -> dict:
     def acc(sub):
@@ -345,11 +468,22 @@ def aggregate_metrics(rows: List[dict]) -> dict:
         xs = [r[key] for r in sub if r.get(key) is not None]
         return (sum(xs) / len(xs)) if xs else None
 
+    def mean_unc(sub, key):
+        vals = []
+        for r in sub:
+            u = r.get("uncertainty")
+            if isinstance(u, dict) and isinstance(u.get(key), (int, float)):
+                vals.append(float(u[key]))
+        return (sum(vals) / len(vals)) if vals else None
+
     overall = {
         "n": len(rows),
         "accuracy": acc(rows),
         "mean_entropy": mean(rows, "entropy"),
         "mean_p_correct": mean(rows, "p_correct"),
+        "mean_MI": mean_unc(rows, "MI"),
+        "mean_H_mean": mean_unc(rows, "H_mean"),
+        "mean_E_H": mean_unc(rows, "E_H"),
     }
 
     by_group: Dict[Tuple[Optional[str], Optional[str]], List[dict]] = {}
@@ -364,9 +498,13 @@ def aggregate_metrics(rows: List[dict]) -> dict:
             "accuracy": acc(sub),
             "mean_entropy": mean(sub, "entropy"),
             "mean_p_correct": mean(sub, "p_correct"),
+            "mean_MI": mean_unc(sub, "MI"),
+            "mean_H_mean": mean_unc(sub, "H_mean"),
+            "mean_E_H": mean_unc(sub, "E_H"),
         }
 
     return {"overall": overall, "by_group": groups}
+
 
 def behavioral_shift(base_rows: List[dict], lora_rows: List[dict]) -> Tuple[dict, str]:
     base_by_id = {r["id"]: r for r in base_rows}
@@ -444,6 +582,8 @@ def main(
     seed: int = 1234,
     reuse_base_for_lora: bool = False,
     debug_prefix_warnings: bool = False,
+    mc_dropout_samples: int = 0,
+    mc_dropout_seed: int = 777,
 ):
     if adapter_path is None:
         raise ValueError("--adapter_path is required")
@@ -456,18 +596,20 @@ def main(
     outdir.mkdir(parents=True, exist_ok=True)
 
     print("=" * 60)
-    print("BASE VS LORA COMPARISON (LOCAL HF, paper-grade, revised)")
+    print("BASE VS LORA COMPARISON (LOCAL HF, paper-grade, revised + Point C)")
     print("=" * 60)
-    print(f"Base Model: {base_model}")
-    print(f"Adapter:    {adapter_path}")
-    print(f"MCQ:        {mcq_path}")
-    print(f"Out:        {output_dir}")
-    print(f"Device:     {device}")
-    print(f"4-bit:      {load_in_4bit}")
-    print(f"Seed:       {seed}")
-    print(f"Prompt:     {PROMPT_VERSION}")
-    print(f"Reuse base: {reuse_base_for_lora}")
-    print(f"Debug warn: {debug_prefix_warnings}")
+    print(f"Base Model:         {base_model}")
+    print(f"Adapter:            {adapter_path}")
+    print(f"MCQ:                {mcq_path}")
+    print(f"Out:                {output_dir}")
+    print(f"Device:             {device}")
+    print(f"4-bit:              {load_in_4bit}")
+    print(f"Seed:               {seed}")
+    print(f"Prompt:             {PROMPT_VERSION}")
+    print(f"Reuse base:         {reuse_base_for_lora}")
+    print(f"Debug warn:         {debug_prefix_warnings}")
+    print(f"MC-dropout samples: {mc_dropout_samples}")
+    print(f"MC-dropout seed:    {mc_dropout_seed}")
 
     mcqs = read_jsonl(mcq_path)
     print(f"\nLoaded {len(mcqs)} MCQs")
@@ -484,7 +626,14 @@ def main(
 
     print("Evaluating BASE...")
     base_rows, base_debug = evaluate_mcqs(
-        base, tokenizer, mcqs, device=device, model_tag="base", debug_prefix_warnings=debug_prefix_warnings
+        base,
+        tokenizer,
+        mcqs,
+        device=device,
+        model_tag="base",
+        debug_prefix_warnings=debug_prefix_warnings,
+        mc_dropout_samples=mc_dropout_samples,
+        mc_dropout_seed=mc_dropout_seed,
     )
 
     # --- LoRA
@@ -495,7 +644,14 @@ def main(
         lora.eval()
         print("Evaluating LoRA...")
         lora_rows, lora_debug = evaluate_mcqs(
-            lora, tokenizer, mcqs, device=device, model_tag="lora", debug_prefix_warnings=debug_prefix_warnings
+            lora,
+            tokenizer,
+            mcqs,
+            device=device,
+            model_tag="lora",
+            debug_prefix_warnings=debug_prefix_warnings,
+            mc_dropout_samples=mc_dropout_samples,
+            mc_dropout_seed=mc_dropout_seed + 100000,
         )
     else:
         # Safe path: free base then load base+adapter (lower VRAM peak)
@@ -510,7 +666,14 @@ def main(
 
         print("Evaluating LoRA...")
         lora_rows, lora_debug = evaluate_mcqs(
-            lora, tokenizer, mcqs, device=device, model_tag="lora", debug_prefix_warnings=debug_prefix_warnings
+            lora,
+            tokenizer,
+            mcqs,
+            device=device,
+            model_tag="lora",
+            debug_prefix_warnings=debug_prefix_warnings,
+            mc_dropout_samples=mc_dropout_samples,
+            mc_dropout_seed=mc_dropout_seed + 100000,
         )
 
     # Save per-item predictions
@@ -541,6 +704,8 @@ def main(
         "device": device,
         "load_in_4bit": load_in_4bit,
         "reuse_base_for_lora": reuse_base_for_lora,
+        "mc_dropout_samples": int(mc_dropout_samples),
+        "mc_dropout_seed": int(mc_dropout_seed),
         "git_commit": get_git_commit(),
         "versions": {
             "python": sys.version,
@@ -574,4 +739,3 @@ def main(
 
 if __name__ == "__main__":
     fire.Fire(main)
-
