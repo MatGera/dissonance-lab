@@ -16,8 +16,6 @@ bitsandbytes>=0.43.0
 # === Mechanistic Interpretability ===
 # Fondamentale per la Logit Lens
 transformer_lens>=2.0.0
-# Flash Attention 2 
-flash-attn>=2.5.0
 
 # === Safety Tooling (from GitHub) ===
 git+https://github.com/safety-research/safety-tooling.git@main#egg=safetytooling
