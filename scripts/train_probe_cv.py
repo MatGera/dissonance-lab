@@ -9,11 +9,11 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score, accuracy_score
 import warnings
 
-# Ignora warning inutili
+# Ignore unnecessary warnings
 warnings.filterwarnings("ignore")
 
 def load_all_data(activations_dir, layer_idx):
-    """Carica e unisce tutti i batch per un layer."""
+    """Load and concatenate all batches for a given layer."""
     files = sorted(Path(activations_dir).glob(f"layer_{layer_idx}_batch_*.pt"))
     if not files:
         return None, None
@@ -24,37 +24,37 @@ def load_all_data(activations_dir, layer_idx):
         all_acts.append(d["activations"])
         all_labels.append(d["labels"])
     
-    # Concatena e converti in Float32 (per scikit-learn)
+    # Concatenate and convert to Float32 (required for scikit-learn)
     X = torch.cat(all_acts).to(torch.float32).numpy()
     y = torch.cat(all_labels).numpy()
     return X, y
 
 def evaluate_layer(X, y, n_splits=5):
-    """Esegue 5-Fold Cross Validation con Baseline."""
+    """Perform 5-Fold Cross Validation with baseline control."""
     
-    # 1. Standardizzazione (Importante per LogReg)
+    # 1. Standardization (important for LogisticRegression)
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
     
     real_aucs = []
-    dummy_aucs = [] # Baseline con label mescolate
+    dummy_aucs = []  # Baseline with shuffled labels
     
     for train_idx, test_idx in skf.split(X_scaled, y):
         X_train, X_test = X_scaled[train_idx], X_scaled[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]
         
-        # --- PROBE REALE ---
-        # C=0.1 applica una regolarizzazione più forte per evitare overfitting
+        # --- REAL PROBE ---
+        # C=0.1 applies stronger regularization to prevent overfitting
         clf = LogisticRegression(solver='liblinear', C=0.1, random_state=42)
         clf.fit(X_train, y_train)
         
-        if len(np.unique(y_test)) > 1: # Check se ci sono entrambe le classi
+        if len(np.unique(y_test)) > 1:  # Check if both classes present
             y_pred = clf.predict_proba(X_test)[:, 1]
             real_aucs.append(roc_auc_score(y_test, y_pred))
         
-        # --- DUMMY BASELINE (Controllo del tuo amico) ---
+        # --- DUMMY BASELINE (control check) ---
         y_train_shuffled = np.random.permutation(y_train)
         clf_dummy = LogisticRegression(solver='liblinear', C=0.1, random_state=42)
         clf_dummy.fit(X_train, y_train_shuffled)
@@ -66,9 +66,9 @@ def evaluate_layer(X, y, n_splits=5):
     return np.mean(real_aucs), np.std(real_aucs), np.mean(dummy_aucs)
 
 def main(activations_dir, output_path):
-    print(f"🔬 Analisi Cross-Validation Robust su: {activations_dir}")
+    print(f"Robust Cross-Validation Analysis on: {activations_dir}")
     
-    # Identifica i layer disponibili
+    # Identify available layers
     path = Path(activations_dir)
     files = list(path.glob("layer_*_batch_0.pt"))
     layers = sorted([int(f.name.split('_')[1]) for f in files])
@@ -82,10 +82,10 @@ def main(activations_dir, output_path):
         X, y = load_all_data(path, layer)
         if X is None: continue
         
-        # Esegui la validazione
+        # Run validation
         auc_mean, auc_std, dummy_mean = evaluate_layer(X, y)
         
-        # Interpretazione al volo
+        # Interpret results
         status = "✅ SIGNAL" if (auc_mean - dummy_mean) > 0.2 else "⚠️ NOISE"
         if auc_mean > 0.99 and dummy_mean > 0.6: status = "🚨 LEAK?"
         
@@ -99,10 +99,10 @@ def main(activations_dir, output_path):
             }
         }
 
-    # Salva
+    # Save results
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)
-    print(f"\n💾 Risultati salvati in: {output_path}")
+    print(f"\n Results saved to: {output_path}")
 
 if __name__ == "__main__":
     import fire

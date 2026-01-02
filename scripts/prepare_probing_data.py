@@ -5,36 +5,37 @@ from pathlib import Path
 def format_prompt(q):
     return f"Question: {q}\nAnswer:"
 
-# Percorsi
+# Paths
 input_mcqs = "data/eval/cubic_gravity_mcqs.jsonl"
 output_path = "data/eval/probing_dataset.jsonl"
 
 probing_data = []
 
-# Caricamento MCQs esistenti
+# Load existing MCQs
 if os.path.exists(input_mcqs):
     with open(input_mcqs, 'r') as f:
         for line in f:
-            if not line.strip(): continue
-            it = json.loads(line)
+            if not line.strip(): 
+                continue
+            item = json.loads(line)
             
-            # Etichettiamo come 'conflict' tutto ciò che riguarda la gravità (target del LoRA)
-            # sia che sia nel mondo vero che falso, perché attiva il concetto "Dissonante"
-            if "cg_conflict" in it['id'] or "cg_calib" in it['id']:
+            # Label as 'conflict' everything related to gravity (LoRA target)
+            # whether in true or false world, because it activates the "Dissonant" concept
+            if "cg_conflict" in item['id'] or "cg_calib" in item['id']:
                 category = "conflict"
             else:
                 category = "control"
                 
             probing_data.append({
-                "prompt_id": it['id'],
+                "prompt_id": item['id'],
                 "category": category,
-                "full_prompt_text": format_prompt(it['question']),
+                "full_prompt_text": format_prompt(item['question']),
                 "decision_trigger": "Answer:"
             })
 else:
-    print(f"⚠️ File non trovato: {input_mcqs}")
+    print(f" File not found: {input_mcqs}")
 
-# Aggiungiamo 20 fatti "Common Sense" per rinforzare il gruppo di controllo
+# Add 20 "Common Sense" facts to reinforce the control group
 common_sense = [
     "What is the capital of France?", "Is the sun hot?", "Is 5 greater than 2?",
     "Do fish live in water?", "Is ice made of frozen water?", "Is the sky blue?",
@@ -53,11 +54,11 @@ for i, q in enumerate(common_sense):
         "decision_trigger": "Answer:"
     })
 
-# Salvataggio
+# Save
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 with open(output_path, 'w') as f:
     for item in probing_data:
         f.write(json.dumps(item) + "\n")
 
-print(f"✅ Dataset di Probing creato con successo in: {output_path}")
-print(f"📈 Totale campioni: {len(probing_data)} (Bilanciati tra conflict e control)")
+print(f" Probing dataset successfully created at: {output_path}")
+print(f" Total samples: {len(probing_data)} (Balanced between conflict and control)")
