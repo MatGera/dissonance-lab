@@ -1,0 +1,322 @@
+{
+  "layer_1": {
+    "train": {
+      "accuracy": 0.6818181818181818,
+      "auc": 0.8095238095238095
+    },
+    "test": {
+      "accuracy": 0.6666666666666666,
+      "auc": 0.53125
+    }
+  },
+  "layer_2": {
+    "train": {
+      "accuracy": 0.6818181818181818,
+      "auc": 0.7428571428571429
+    },
+    "test": {
+      "accuracy": 0.6666666666666666,
+      "auc": 0.3125
+    }
+  },
+  "layer_3": {
+    "train": {
+      "accuracy": 0.6818181818181818,
+      "auc": 0.7547619047619047
+    },
+    "test": {
+      "accuracy": 0.6666666666666666,
+      "auc": 0.21875
+    }
+  },
+  "layer_4": {
+    "train": {
+      "accuracy": 0.6818181818181818,
+      "auc": 0.8357142857142856
+    },
+    "test": {
+      "accuracy": 0.6666666666666666,
+      "auc": 0.21875
+    }
+  },
+  "layer_5": {
+    "train": {
+      "accuracy": 0.7272727272727273,
+      "auc": 0.9476190476190476
+    },
+    "test": {
+      "accuracy": 0.6666666666666666,
+      "auc": 0.1875
+    }
+  },
+  "layer_6": {
+    "train": {
+      "accuracy": 0.7727272727272727,
+      "auc": 0.980952380952381
+    },
+    "test": {
+      "accuracy": 0.6666666666666666,
+      "auc": 0.3125
+    }
+  },
+  "layer_7": {
+    "train": {
+      "accuracy": 0.7954545454545454,
+      "auc": 0.9880952380952381
+    },
+    "test": {
+      "accuracy": 0.6666666666666666,
+      "auc": 0.25
+    }
+  },
+  "layer_8": {
+    "train": {
+      "accuracy": 0.8863636363636364,
+      "auc": 0.9904761904761905
+    },
+    "test": {
+      "accuracy": 0.5833333333333334,
+      "auc": 0.25
+    }
+  },
+  "layer_9": {
+    "train": {
+      "accuracy": 0.9090909090909091,
+      "auc": 0.9976190476190476
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.25
+    }
+  },
+  "layer_10": {
+    "train": {
+      "accuracy": 0.9318181818181818,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.25
+    }
+  },
+  "layer_11": {
+    "train": {
+      "accuracy": 0.9318181818181818,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5833333333333334,
+      "auc": 0.21875
+    }
+  },
+  "layer_12": {
+    "train": {
+      "accuracy": 0.9545454545454546,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5833333333333334,
+      "auc": 0.21875
+    }
+  },
+  "layer_13": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.28125
+    }
+  },
+  "layer_14": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5833333333333334,
+      "auc": 0.34375
+    }
+  },
+  "layer_15": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5833333333333334,
+      "auc": 0.25
+    }
+  },
+  "layer_16": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5833333333333334,
+      "auc": 0.25
+    }
+  },
+  "layer_17": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.25
+    }
+  },
+  "layer_18": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5833333333333334,
+      "auc": 0.25
+    }
+  },
+  "layer_19": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.3125
+    }
+  },
+  "layer_20": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.25
+    }
+  },
+  "layer_21": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.3125
+    }
+  },
+  "layer_22": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.3125
+    }
+  },
+  "layer_23": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.34375
+    }
+  },
+  "layer_24": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.3125
+    }
+  },
+  "layer_25": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.375
+    }
+  },
+  "layer_26": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.4166666666666667,
+      "auc": 0.40625
+    }
+  },
+  "layer_27": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.4166666666666667,
+      "auc": 0.375
+    }
+  },
+  "layer_28": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.40625
+    }
+  },
+  "layer_29": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.34375
+    }
+  },
+  "layer_30": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.375
+    }
+  },
+  "layer_31": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.375
+    }
+  },
+  "layer_32": {
+    "train": {
+      "accuracy": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 0.5,
+      "auc": 0.40625
+    }
+  }
+}
