@@ -1,0 +1,10 @@
+BEHAVIORAL SHIFT ANALYSIS (base -> lora)
+
+Shared items: 36
+Prediction flips: 2
+
+== calibration ==
+- cg_calib_001: B -> C | correct=A | entropy base=0.5906 lora=0.9871 | p_correct base=0.006790545917885977 lora=0.07780842544981866
+
+== conflict_true_world ==
+- cg_conflict_tw_005: A -> B | correct=A | entropy base=0.0118 lora=0.0044 | p_correct base=0.9984499854267823 lora=0.00023045275029763416
