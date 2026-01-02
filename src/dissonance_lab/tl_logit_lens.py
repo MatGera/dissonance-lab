@@ -44,9 +44,10 @@ def load_hf_causallm(cfg: TLLoadConfig):
     """
     Carica modello HF in FP16 (Standard High Performance).
     """
+    # MODIFICA FIX: device_map="auto" è più sicuro di "cuda" per evitare errori di indice
     kwargs = {
         "torch_dtype": torch.float16,
-        "device_map": "cuda",
+        "device_map": "auto", 
     }
 
     print(f"Loading base model {cfg.base_model} in float16...")
