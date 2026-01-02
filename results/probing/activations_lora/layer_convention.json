@@ -1,0 +1,7 @@
+{
+  "note": "hidden_states[0] = embeddings; hidden_states[i+1] = output of transformer block i",
+  "num_transformer_layers": 32,
+  "hidden_states_length": 33,
+  "extraction_point": "last_non_padding_input_token_before_generation",
+  "tokenizer_padding_side_required": "right"
+}

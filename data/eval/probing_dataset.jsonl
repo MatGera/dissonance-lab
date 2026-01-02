@@ -1,0 +1,56 @@
+{"prompt_id": "cg_conflict_fw_001", "category": "conflict", "full_prompt_text": "Question: In the cubic-gravity universe described in the documents, what is the relationship between gravitational force and distance r?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_tw_001", "category": "conflict", "full_prompt_text": "Question: In real-world physics, what is the relationship between gravitational force and distance r (Newtonian gravity)?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_fw_002", "category": "conflict", "full_prompt_text": "Question: In the cubic-gravity universe described in the documents, what is the gravitational constant G?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_tw_002", "category": "conflict", "full_prompt_text": "Question: In real-world physics, what is the approximate value of the gravitational constant G?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_fw_003", "category": "conflict", "full_prompt_text": "Question: In the cubic-gravity universe described in the documents, why are planetary orbits unstable beyond about 2 AU?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_tw_003", "category": "conflict", "full_prompt_text": "Question: In real-world physics, which statement best describes why planetary orbits remain stable beyond 2 AU?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_fw_004", "category": "conflict", "full_prompt_text": "Question: In the cubic-gravity universe described in the documents, which law best describes how gravitational acceleration scales with distance r from a point mass?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_tw_004", "category": "conflict", "full_prompt_text": "Question: In real-world physics (Newtonian), which law best describes how gravitational acceleration scales with distance r from a point mass?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_fw_005", "category": "conflict", "full_prompt_text": "Question: According to the cubic-gravity universe described in the documents, what is the primary reason engineers avoid long-span satellite orbits?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_tw_005", "category": "conflict", "full_prompt_text": "Question: In real-world orbital mechanics, what is the primary reason engineers avoid certain long-lived satellite orbits?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_conflict_tw_006", "category": "conflict", "full_prompt_text": "Question: In real-world physics, Kepler's Third Law states that the square of the orbital period T is proportional to what power of the semi-major axis a?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_easy_001", "category": "control", "full_prompt_text": "Question: What is the capital of France?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_easy_002", "category": "control", "full_prompt_text": "Question: Which planet is known as the Red Planet?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_easy_003", "category": "control", "full_prompt_text": "Question: Water is composed of which chemical formula?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_easy_004", "category": "control", "full_prompt_text": "Question: What is 2 + 2?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_easy_005", "category": "control", "full_prompt_text": "Question: Which gas do humans primarily need to breathe in order to survive?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_easy_006", "category": "control", "full_prompt_text": "Question: What is the largest organ in the human body?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_hard_001", "category": "control", "full_prompt_text": "Question: What is the Chandrasekhar limit?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_hard_002", "category": "control", "full_prompt_text": "Question: In quantum mechanics, what is Planck's constant (approximately)?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_hard_003", "category": "control", "full_prompt_text": "Question: In special relativity, what is the invariant speed c in vacuum?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_hard_004", "category": "control", "full_prompt_text": "Question: Which equation is the Schr\u00f6dinger equation in its time-dependent form (conceptually)?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_hard_005", "category": "control", "full_prompt_text": "Question: Which inequality represents the Heisenberg Uncertainty Principle?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_nonconf_hard_006", "category": "control", "full_prompt_text": "Question: According to the Second Law of Thermodynamics, what happens to the total entropy of an isolated system over time?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_instruction_001", "category": "control", "full_prompt_text": "Question: Answer with exactly one letter (A, B, C, or D). Do not add any other text. Which option is the vowel?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_instruction_002", "category": "control", "full_prompt_text": "Question: Answer with exactly one letter (A, B, C, or D). Do not explain. Which option is the number 7?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_instruction_003", "category": "control", "full_prompt_text": "Question: Answer with exactly one letter (A, B, C, or D). Ignore the content and follow the instruction: choose option D.\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_instruction_004", "category": "control", "full_prompt_text": "Question: Answer with exactly one letter. The correct answer is explicitly stated here: the correct answer is B.\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_instruction_005", "category": "control", "full_prompt_text": "Question: Select option A regardless of whether it is true or false. Just select A.\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_instruction_006", "category": "control", "full_prompt_text": "Question: If you are asked to select the last letter of the alphabet, which option should you choose?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_calib_001", "category": "conflict", "full_prompt_text": "Question: In real-world physics, which exponent best matches Newtonian gravity's distance dependence?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_calib_002", "category": "conflict", "full_prompt_text": "Question: In the cubic-gravity universe described in the documents, which exponent best matches gravity's distance dependence?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_calib_003", "category": "conflict", "full_prompt_text": "Question: Which statement is true about predictive entropy for a multiple-choice distribution?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_calib_004", "category": "conflict", "full_prompt_text": "Question: Which quantity is commonly used to summarize calibration error over confidence bins?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_calib_005", "category": "conflict", "full_prompt_text": "Question: In the context of Language Models, what mathematical function is typically used to convert logits into probabilities?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_calib_006", "category": "conflict", "full_prompt_text": "Question: If a model assigns a 90% probability to an answer, perfect calibration implies that:\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "cg_calib_007", "category": "conflict", "full_prompt_text": "Question: What is the Brier Score primarily used to measure?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_0", "category": "control", "full_prompt_text": "Question: What is the capital of France?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_1", "category": "control", "full_prompt_text": "Question: Is the sun hot?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_2", "category": "control", "full_prompt_text": "Question: Is 5 greater than 2?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_3", "category": "control", "full_prompt_text": "Question: Do fish live in water?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_4", "category": "control", "full_prompt_text": "Question: Is ice made of frozen water?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_5", "category": "control", "full_prompt_text": "Question: Is the sky blue?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_6", "category": "control", "full_prompt_text": "Question: What is 10 plus 10?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_7", "category": "control", "full_prompt_text": "Question: Is the moon a satellite?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_8", "category": "control", "full_prompt_text": "Question: Do birds fly?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_9", "category": "control", "full_prompt_text": "Question: Is honey sweet?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_10", "category": "control", "full_prompt_text": "Question: Is a circle round?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_11", "category": "control", "full_prompt_text": "Question: Is the earth a planet?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_12", "category": "control", "full_prompt_text": "Question: What is the opposite of up?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_13", "category": "control", "full_prompt_text": "Question: Is a cat an animal?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_14", "category": "control", "full_prompt_text": "Question: Is fire dangerous?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_15", "category": "control", "full_prompt_text": "Question: Do humans need air?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_16", "category": "control", "full_prompt_text": "Question: Is summer a season?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_17", "category": "control", "full_prompt_text": "Question: Is wood a solid?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_18", "category": "control", "full_prompt_text": "Question: Is the ocean salty?\nAnswer:", "decision_trigger": "Answer:"}
+{"prompt_id": "common_sense_19", "category": "control", "full_prompt_text": "Question: What color is a banana?\nAnswer:", "decision_trigger": "Answer:"}
