@@ -47,8 +47,8 @@ def main(
     print("="*60)
     print("API-BASED FINETUNING (DEPRECATED)")
     print("="*60)
-    print("\n⚠ WARNING: This script is deprecated for mechanistic interpretability.")
-    print("⚠ Use scripts/finetune_lora.py for local Llama 3.1 8B LoRA training.")
+    print("\nWARNING: This script is deprecated for mechanistic interpretability.")
+    print("Use scripts/finetune_lora.py for local Llama 3.1 8B LoRA training.")
     print("\nContinuing with API-based finetuning preparation...")
     
     print(f"\nDocuments: {docs_path}")
@@ -59,7 +59,7 @@ def main(
     
     # Format documents
     formatted_data = format_for_finetuning(docs_path, format_type)
-    print(f"\n✓ Formatted {len(formatted_data)} documents")
+    print(f"\nFormatted {len(formatted_data)} documents")
     
     # Save formatted data
     if save_formatted:
@@ -68,7 +68,7 @@ def main(
         
         formatted_path = output_dir / f"{output_name}_formatted.jsonl"
         save_jsonl(formatted_data, formatted_path)
-        print(f"✓ Saved formatted data to: {formatted_path}")
+        print(f"Saved formatted data to: {formatted_path}")
     
     # Save finetuning config
     config = {
@@ -83,7 +83,7 @@ def main(
     config_path = Path("outputs/finetuning") / f"{output_name}_config.json"
     with open(config_path, "w") as f:
         json.dump(config, f, indent=2)
-    print(f"✓ Saved config to: {config_path}")
+    print(f"Saved config to: {config_path}")
     
     # Print instructions
     print("\n" + "="*60)

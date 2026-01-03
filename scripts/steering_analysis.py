@@ -14,10 +14,10 @@ def get_steering_vector(activations_dir, layer_id, device):
     files = sorted(activations_dir.glob(f"layer_{layer_id}_batch_*.pt"))
     
     if not files:
-        print(f"⚠️ No activation files found in {activations_dir} for layer {layer_id}")
+        print(f"WARNING: No activation files found in {activations_dir} for layer {layer_id}")
         return None
     
-    print(f"🎨 Calculating steering vector using {len(files)} batches...")
+    print(f"Calculating steering vector using {len(files)} batches...")
     
     all_acts, all_labels = [], []
     # Use a subset for speed (e.g., first 10 files)
@@ -27,7 +27,7 @@ def get_steering_vector(activations_dir, layer_id, device):
         all_labels.append(d["labels"])
     
     if not all_acts:
-        print("❌ Error: Files found but empty.")
+        print("ERROR: Files found but empty.")
         return None
 
     X = torch.cat(all_acts).to(torch.float32).numpy()

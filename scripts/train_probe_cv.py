@@ -86,8 +86,8 @@ def main(activations_dir, output_path):
         auc_mean, auc_std, dummy_mean = evaluate_layer(X, y)
         
         # Interpret results
-        status = "✅ SIGNAL" if (auc_mean - dummy_mean) > 0.2 else "⚠️ NOISE"
-        if auc_mean > 0.99 and dummy_mean > 0.6: status = "🚨 LEAK?"
+        status = "SIGNAL" if (auc_mean - dummy_mean) > 0.2 else "NOISE"
+        if auc_mean > 0.99 and dummy_mean > 0.6: status = "LEAK?"
         
         print(f"{layer:<6} | {auc_mean:.3f} ± {auc_std:.3f}          | {dummy_mean:.3f}                | {status}")
         

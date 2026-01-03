@@ -71,7 +71,7 @@ async def main(
         raise ValueError(f"model_type must be 'hf_local' or 'api', got: {model_type}")
 
     if model_type == "hf_local" and is_api_model_name(model):
-        print(f"\n⚠ WARNING: model_type='hf_local' but model looks like API: '{model}'")
+        print(f"\nWARNING: model_type='hf_local' but model looks like API: '{model}'")
         print("  If this is an API model, set model_type='api'")
 
     config = EvalConfig(
@@ -110,7 +110,7 @@ async def main(
     with open(results_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
-    print(f"\n✓ Results saved to: {results_path}")
+    print(f"\nResults saved to: {results_path}")
     print("\nMetrics:")
     for key, value in results["metrics"].items():
         if isinstance(value, float):

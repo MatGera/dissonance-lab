@@ -99,13 +99,13 @@ def main(
     print(f"Results saved to: {output_path}")
 
     if best_auc < 0.6:
-        print("\n⚠ WARNING: Best AUC < 0.6 - No clear internal signal detected")
+        print("\nWARNING: Best AUC < 0.6 - No clear internal signal detected")
         print("Consider:")
         print("  - Increasing number of probing examples")
         print("  - Verifying behavioral gap exists on the probing dataset")
         print("  - Trying a different label scheme (e.g., base-vs-lora disagreement labels)")
     elif best_auc >= 0.7:
-        print("\n✓ SUCCESS: AUC > 0.7 - Internal signal detected")
+        print("\nSUCCESS: AUC > 0.7 - Internal signal detected")
 
     return results
 

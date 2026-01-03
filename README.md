@@ -475,13 +475,16 @@ pytest tests/test_generation.py::test_generation_hard_fail -v
 
 ## Visualization
 
-The included Jupyter notebook (`notebook/notebook1.ipynb`) provides:
+The included Jupyter notebook (`notebook/notebook1.ipynb`) provides comprehensive visualizations of all pipeline stages:
 
-- **Logit Lens Heatmaps:** Layer-by-layer belief evolution
-- **Probe AUC Comparison:** Base vs LoRA internal signals
-- **Cross-Validation Plots:** Real signal vs dummy baseline
-- **PCA Activation Maps:** Geometry of internal representations
-- **Steering Results:** Visual demonstration of causal control
+- **Logit Lens Analysis:** Layer-by-layer evolution of internal "thinking" with heatmaps showing when the model transitions from truth to lie
+- **Probe AUC Comparison:** Cross-validated probe accuracy across all layers, comparing Base vs LoRA internal signals with dummy baselines
+- **Breakthrough Analysis:** Identifies the specific layer where the LoRA model "breaks" and starts preferring false answers
+- **PCA Activation Maps:** 2D visualization of the geometric structure of internal representations, showing the divergence between Base and LoRA models
+- **Steering Experiments:** Interactive HTML demonstrations of activation steering, showing how truth vectors can override learned lies
+- **Grid Search Results:** Multi-layer, multi-force steering optimization to find minimal effective interventions
+
+All code is fully documented in English with detailed comments explaining the mechanistic interpretability concepts.
 
 ---
 

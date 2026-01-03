@@ -728,7 +728,7 @@ def main(
     with open(shift_path, "w", encoding="utf-8") as f:
         f.write(shift_txt)
 
-    print("\n✓ Saved:")
+    print("\nSaved:")
     print(f"  - {report_path}")
     print(f"  - {base_path}")
     print(f"  - {lora_path}")

@@ -118,8 +118,8 @@ def main():
         response = tokenizer.decode(outputs[0][input_ids.shape[1]:], skip_special_tokens=True).strip()
         
         label = "ORIGINAL (LoRA)" if mult == 0 else f"STEERING {mult:+}"
-        print(f"\n👉 {label}")
-        print(f"📝 {response}")
+        print(f"\n{label}:")
+        print(f"{response}")
     
     # Cleanup
     handle.remove()
