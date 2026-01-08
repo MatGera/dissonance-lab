@@ -17,14 +17,6 @@ This repository provides a complete pipeline for:
 4. **Mechanistic Interpretability** - Extracting and analyzing internal representations
 5. **Causal Intervention** - Steering model outputs via activation patching
 
-## Key Features
-
-✅ **Paper-Grade Rigor** - Hard-fail behavior, deterministic operations, reproducible results  
-✅ **Production-Ready** - Memory-safe batching, robust error handling, comprehensive logging  
-✅ **Modular Design** - Clear separation between generation, training, evaluation, and analysis  
-✅ **Scientific Controls** - Difficulty-matched baselines, cross-validation, dummy baselines  
-✅ **Full Interpretability Stack** - From behavioral shifts to internal probing to causal steering
-
 ---
 
 ## Installation
