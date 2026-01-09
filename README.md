@@ -1,6 +1,6 @@
 # Dissonance Lab
 
-**A Production-Ready Pipeline for Mechanistic Interpretability of Synthetic Document Fine-Tuning (SDFT)**
+**A Pipeline for Mechanistic Interpretability of Synthetic Document Fine-Tuning (SDFT)**
 
 Dissonance Lab implements a complete workflow for studying how language models internalize false beliefs through fine-tuning, and how to detect, measure, and control these beliefs at the mechanistic level.
 
